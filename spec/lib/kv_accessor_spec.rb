@@ -16,12 +16,21 @@ RSpec.describe KvAccessor do
       attr_accessor :details, :other
       extend KvAccessor
 
-      kv_accessor :details, :make, year: 'model_year',
-                  blue_interior: { 'leather' => 'blue' }
-      kv_reader :details, 'model', :price
-      kv_writer :details, 'color', :price
+      # The self is required for consts in anonymous classes.
+      self::DETAILS_ACCESSORS =
+        kv_accessor :details, :make, year: 'model_year',
+                    blue_interior: { 'leather' => 'blue' }
 
-      kv_accessor :other, :upc
+      self::DETAILS_READERS = self::DETAILS_ACCESSORS.merge(
+        kv_reader :details, 'model', :price
+      )
+
+      self::DETAILS_WRITERS = self::DETAILS_ACCESSORS.merge(
+        kv_writer :details, 'color', :price
+      )
+
+      self::OTHER_ACCESSORS =
+        kv_accessor :other, :upc
 
       def initialize(details, other)
         self.details = details
@@ -77,5 +86,30 @@ RSpec.describe KvAccessor do
     end
   end
 
+  describe '.kv_accessor' do
+    it 'returns the hash of attributes for the kv_accessor' do
+      expect(
+        Class.new { extend KvAccessor }
+          .kv_accessor(:attributes, :mayonnaise, year: 'release date')
+      ).to eq(mayonnaise: :mayonnaise, year: 'release date')
+    end
+  end
+
+  describe '.kv_reader' do
+    it 'returns the hash of attributes for the kv_reader' do
+      expect(
+        Class.new { extend KvAccessor }
+          .kv_reader(:attributes, :iscariot, release: 'born')
+      ).to eq(iscariot: :iscariot, release: 'born')
+    end
+  end
+
+  describe '.kv_writer' do
+    it 'returns the hash of attributes for the kv_writer' do
+      expect(
+        Class.new { extend KvAccessor }
+          .kv_writer(:attributes, :adore, vocals: 'singers')
+      ).to eq(adore: :adore, vocals: 'singers')
+    end
   end
 end
